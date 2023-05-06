@@ -1,8 +1,8 @@
-# pomodoro
-
-<a href="https://www.producthunt.com/posts/pomodoro?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-pomodoro" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=355079&theme=light" alt="pomodoro - Simple&#0032;Pomodoro&#0032;timer&#0032;for&#0032;the&#0032;web | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+# Tomodoro
 
 A pomodoro web app with PIP mode, white noise generation, tasks and more!
+
+![Screenshot](./screenshot.png)
 
 ## Features:
 
@@ -15,12 +15,14 @@ A pomodoro web app with PIP mode, white noise generation, tasks and more!
 
 ## Tasks and Statistics
 
-![Statistics](https://Dadajanov.github.io/pomodoro/statistics.png)
+![Statistics](./statistics.png)
 
-pomodoro allows the creation of "Tasks". Time spent in a focus session can be dedicated to a task in order to generate statistics.
-All the data is saved in your browser. Taking frequent backups is recommended. Backup and restore options are available in pomodoro's settings.
+Tomodoro allows the creation of "Tasks". Time spent in a focus session can be dedicated to a task in order to generate statistics.
+All the data is saved in your browser. Taking frequent backups is recommended. Backup and restore options are available in Tomodoro's settings.
 
 ## About Always On Top/PIP Mode
+
+![PIP Demo](https://lazy-guy.github.io/tomodoro/pip.png)
 
 **Not tested on Safari but might work**
 
