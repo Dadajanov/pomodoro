@@ -22,8 +22,6 @@ All the data is saved in your browser. Taking frequent backups is recommended. B
 
 ## About Always On Top/PIP Mode
 
-![PIP Demo](https://lazy-guy.github.io/tomodoro/pip.png)
-
 **Not tested on Safari but might work**
 
 PIP mode works by drawing on a canvas, capturing its stream and using it as source of a video element. Then it requests Picture-In-Picture.
