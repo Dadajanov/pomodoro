@@ -22,7 +22,7 @@ All the data is saved in your browser. Taking frequent backups is recommended. B
 
 ## About Always On Top/PIP Mode
 
-![PIP Demo](./pip.png)
+![PIP Demo](./pip.jpeg)
 
 **Not tested on Safari but might work**
 
