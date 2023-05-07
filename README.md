@@ -1,4 +1,4 @@
-# Tomodoro
+# Pomodoro
 
 A pomodoro web app with PIP mode, white noise generation, tasks and more!
 
