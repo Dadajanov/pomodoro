@@ -94,8 +94,8 @@ timerWorker.addEventListener("message", (e) => {
 
 function nextRound() {
   let finished = fullname[roundInfo.current];
-  console.log(roundInfo.current);
   let body = "Begin ";
+
   if (roundInfo.current === "focus") {
     if (audioType === "noise") {
       fadeOut();
@@ -227,6 +227,7 @@ function notify(title, message) {
     return;
   } else if (Notification.permission === "granted") {
     if (notification) notification.close();
+
     notification = new Notification(title, {
       body: message,
       icon: "./icons/icon192.png",
@@ -490,10 +491,8 @@ function loadTasks() {
   return new Promise((resolve) => {
     let tr = indexedDB.open("pomo-db", 1);
     tr.onupgradeneeded = (ev) => {
-      console.log(ev.target.result);
       db = ev.target.result;
       let recordStore = db.createObjectStore("records", { keyPath: "d" });
-      console.log(recordStore);
       recordStore.createIndex("task", "n", { unique: false });
       recordStore.transaction.oncomplete = (event) => {
         resolve();
@@ -512,23 +511,14 @@ async function getRecords(time) {
     if (filteredTasks.size === 0) {
       resolve(result);
     } else if (filteredTasks.size === tasks.length) {
-      console.log(filteredTasks.size === tasks.length);
       let tr = db
         .transaction("records", "readonly")
         .objectStore("records")
         .index("task")
         .getAll();
       tr.onsuccess = () => resolve(tr.result);
-      console.log(
-        db
-          .transaction("records", "readonly")
-          .objectStore("records")
-          .index("task")
-          .getAll()
-      );
     } else {
       let filteredArray = Array.from(filteredTasks);
-      console.log(filteredArray);
       filteredArray.forEach((task, i) => {
         let tr = db
           .transaction("records", "readonly")
@@ -578,8 +568,6 @@ function focusEnd(t) {
   let minutes = Math.round(t / 60);
   if (minutes <= 0) return;
   tasks.find((task) => {
-    console.log(task.name === selectedTask);
-    console.log(task.name, selectedTask);
     if (task.name === selectedTask) {
       saveRecord({
         t: minutes,
@@ -619,14 +607,17 @@ document
         try {
           let dbBackup = JSON.parse(res);
           let rec = dbBackup.map((r) => {
-            if (!tasks.includes(r.n)) {
-              tasks.push(r.n);
-              createTaskEl(r.n);
-              if (!tasks.includes(selectedTask)) {
-                selectedTask = r.n;
-                taskSelect.value = r.n;
+            tasks.find((task) => {
+              if (!task.name === r.n) {
+                tasks.push(r.n);
+                createTaskEl(r.n);
+                if (!tasks.includes(selectedTask)) {
+                  selectedTask = r.n;
+                  taskSelect.value = r.n;
+                }
               }
-            }
+            });
+
             return { t: r.t, d: r.d, n: r.n };
           });
           saveTasks();
@@ -654,7 +645,6 @@ let timeMonthlyChart = document.getElementById("timemonthly");
 let timeYearlyChart = document.getElementById("timeyearly");
 
 statTimeSelect.addEventListener("change", () => {
-  console.log(statTimeSelect);
   localStorage.setItem("pomo-stat-period", statTimeSelect.value);
   loadStatistics();
 });
@@ -1006,7 +996,6 @@ async function loadStatistics(updateEntryCards = true) {
   let timeValue = statTimeSelect.value;
 
   let rec = await getRecords();
-  console.log(rec);
 
   if (!(timeValue === "all")) {
     let tt = Date.now() - parseInt(timeValue) * 24 * 60 * 60 * 1000;
@@ -1028,7 +1017,6 @@ async function loadStatistics(updateEntryCards = true) {
       task: task,
       n: 0,
     };
-    console.log(task, rec);
     rec
       .filter((r) => r.n === task)
       .forEach((r) => {
