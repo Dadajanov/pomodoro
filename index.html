@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pomodoro</title>
-  <link rel="stylesheet" href="./index.css" />
+  <link rel="stylesheet" href="./css/index.css" />
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/appletouch.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon.png" />
   <link rel="manifest" href="./site.webmanifest" />
@@ -452,6 +452,7 @@
       <div id="task-container"></div>
       <form id="newtask" class="task">
         <input id="new-task-name" name="taskname" type="text" min="1" maxlength="25" placeholder="Add New Task" />
+        <input type="time" id="time-picker" name="timepicker"/>
         <button type="submit" title="Create new task" class="crossbtn" id="new-task-btn"></button>
       </form>
     </div>
@@ -492,7 +493,7 @@
     </div>
     <button id="closeintro" class="hover-shadow">Let's Get Started!</button>
   </div>
-  <script src="./index.js"></script>
+  <script src="./js/index.js"></script>
 </body>
 
 </html>

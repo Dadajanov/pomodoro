@@ -1,8 +1,8 @@
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js");
+  navigator.serviceWorker.register("./js/sw.js");
 }
 
-let timerWorker = new Worker("./worker.js");
+let timerWorker = new Worker("./js/worker.js");
 
 let root = document.documentElement;
 
@@ -94,6 +94,7 @@ timerWorker.addEventListener("message", (e) => {
 
 function nextRound() {
   let finished = fullname[roundInfo.current];
+  console.log(roundInfo.current);
   let body = "Begin ";
   if (roundInfo.current === "focus") {
     if (audioType === "noise") {
@@ -444,13 +445,14 @@ document.getElementById("closestats").addEventListener("click", function () {
 
 //#region Statistics
 
-let tasks = ["Default Task"];
+let tasks = [{ name: "Default Task", startTime: null }];
 
 let selectedTask = "Default Task";
 
 let taskContainer = document.getElementById("task-container");
 let filterContainer = document.getElementById("filters");
 let filteredTasks = new Set();
+
 let db;
 
 let statTimeSelect = document.getElementById("stat-time-select");
@@ -464,25 +466,34 @@ function loadTasks() {
       tasks = ["Default Task"];
     }
   }
+
   if (localStorage.getItem("pomo-records")) {
     let records = JSON.parse(localStorage.getItem("pomo-records"));
     records.forEach((r) => saveRecord(r));
     localStorage.removeItem("pomo-records");
   }
+
   if (localStorage.getItem("pomo-selected-task")) {
-    if (tasks.includes(localStorage.getItem("pomo-selected-task"))) {
-      selectedTask = localStorage.getItem("pomo-selected-task");
-      taskSelect.value = selectedTask;
-    }
+    tasks.find((task) => {
+      if (task.name === localStorage.getItem("pomo-selected-task")) {
+        selectedTask = localStorage.getItem("pomo-selected-task");
+        taskSelect.value = selectedTask;
+        return;
+      }
+    });
   }
+
   if (localStorage.getItem("pomo-stat-period")) {
     statTimeSelect.value = localStorage.getItem("pomo-stat-period");
   }
+
   return new Promise((resolve) => {
     let tr = indexedDB.open("pomo-db", 1);
     tr.onupgradeneeded = (ev) => {
+      console.log(ev.target.result);
       db = ev.target.result;
       let recordStore = db.createObjectStore("records", { keyPath: "d" });
+      console.log(recordStore);
       recordStore.createIndex("task", "n", { unique: false });
       recordStore.transaction.oncomplete = (event) => {
         resolve();
@@ -501,14 +512,23 @@ async function getRecords(time) {
     if (filteredTasks.size === 0) {
       resolve(result);
     } else if (filteredTasks.size === tasks.length) {
+      console.log(filteredTasks.size === tasks.length);
       let tr = db
         .transaction("records", "readonly")
         .objectStore("records")
         .index("task")
         .getAll();
       tr.onsuccess = () => resolve(tr.result);
+      console.log(
+        db
+          .transaction("records", "readonly")
+          .objectStore("records")
+          .index("task")
+          .getAll()
+      );
     } else {
       let filteredArray = Array.from(filteredTasks);
+      console.log(filteredArray);
       filteredArray.forEach((task, i) => {
         let tr = db
           .transaction("records", "readonly")
@@ -557,13 +577,18 @@ function saveTasks() {
 function focusEnd(t) {
   let minutes = Math.round(t / 60);
   if (minutes <= 0) return;
-  if (tasks.includes(selectedTask)) {
-    saveRecord({
-      t: minutes,
-      d: Date.now(),
-      n: selectedTask,
-    });
-  }
+  tasks.find((task) => {
+    console.log(task.name === selectedTask);
+    console.log(task.name, selectedTask);
+    if (task.name === selectedTask) {
+      saveRecord({
+        t: minutes,
+        d: Date.now(),
+        n: selectedTask,
+      });
+      return;
+    }
+  });
 }
 
 document.getElementById("create-backup").addEventListener("click", () => {
@@ -606,13 +631,12 @@ document
           });
           saveTasks();
           noTaskManager();
-          console.log(rec, tasks);
+
           let tr = db.transaction("records", "readwrite");
           tr.oncomplete = () => alert("Backup restored successfully!");
           let objstore = tr.objectStore("records");
           rec.forEach((r) => objstore.add(r));
         } catch (error) {
-          console.log(error);
           alert(
             "An error occured! Make sure that you are restoring a valid backup file."
           );
@@ -628,7 +652,9 @@ let timeSixHourlyChart = document.getElementById("timesixhourly");
 let timeDailyChart = document.getElementById("timedaily");
 let timeMonthlyChart = document.getElementById("timemonthly");
 let timeYearlyChart = document.getElementById("timeyearly");
+
 statTimeSelect.addEventListener("change", () => {
+  console.log(statTimeSelect);
   localStorage.setItem("pomo-stat-period", statTimeSelect.value);
   loadStatistics();
 });
@@ -636,7 +662,7 @@ statTimeSelect.addEventListener("change", () => {
 let taskBars = {};
 let pieCards = {};
 
-function createTaskEl(task) {
+function createTaskEl(task, time) {
   filteredTasks.add(task);
   let op = document.createElement("option");
   op.value = op.innerText = task;
@@ -648,6 +674,12 @@ function createTaskEl(task) {
   tname.className = "task-name";
   tname.innerText = task;
   tel.appendChild(tname);
+
+  if (time) {
+    let ttimer = document.createElement("div");
+    ttimer.innerText = `start time: ${time}`;
+    tel.appendChild(ttimer);
+  }
 
   let chip = document.createElement("label");
   chip.className = "task-chip";
@@ -686,27 +718,41 @@ function createTaskEl(task) {
   let tdel = document.createElement("button");
   tdel.className = "task-delete-btn crossbtn";
   tdel.title = "Delete this task";
+
   tdel.addEventListener("click", () => {
     let p = confirm(
       'Are you sure you want to delete the task "' +
         task +
         '"? All the data related to this task will be deleted.'
     );
+
     if (!p) return;
-    tasks.splice(tasks.indexOf(task), 1);
+
+    tasks.splice(
+      tasks.findIndex((t) => {
+        return t.name === task;
+      }),
+      1
+    );
+
     op.remove();
     tel.remove();
     chip.remove();
     filteredTasks.delete(task);
+
     if (filteredTasks.size === 0) {
       allCheckbox.checked = false;
     }
     if (filteredTasks.size === tasks.length) {
       allCheckbox.checked = true;
     }
+
     taskBars[task].remove();
+
     delete taskBars[task];
+
     pieCards[task].remove();
+
     delete pieCards[task];
     if (selectedTask === task) {
       if (tasks.length > 0) {
@@ -718,6 +764,7 @@ function createTaskEl(task) {
     deleteRecords(task);
     saveTasks();
   });
+
   tel.appendChild(tdel);
 
   taskContainer.appendChild(tel);
@@ -737,16 +784,18 @@ function noTaskManager() {
 
 async function taskInit() {
   await loadTasks();
+
   taskSelect.innerHTML = "";
   noTaskManager();
-  tasks.forEach((task) => createTaskEl(task));
+
+  tasks.forEach((task) => createTaskEl(task.name, task.startTime));
   allCheckbox.addEventListener("change", function () {
     if (this.checked) {
       document
         .querySelectorAll(".task-checkbox")
         .forEach((el) => (el.checked = true));
       tasks.forEach((task) => {
-        filteredTasks.add(task);
+        filteredTasks.add(task.name);
         taskBars[task].style.display = "flex";
         pieCards[task].style.display = "block";
       });
@@ -755,9 +804,9 @@ async function taskInit() {
         .querySelectorAll(".task-checkbox")
         .forEach((el) => (el.checked = false));
       tasks.forEach((task) => {
-        filteredTasks.delete(task);
-        taskBars[task].style.display = "none";
-        pieCards[task].style.display = "none";
+        filteredTasks.delete(task.name);
+        taskBars[task.name].style.display = "none";
+        pieCards[task.name].style.display = "none";
       });
     }
     loadStatistics();
@@ -770,17 +819,29 @@ document.getElementById("newtask").addEventListener("submit", function (ev) {
   ev.preventDefault();
   let formdata = new FormData(this);
   let tname = formdata.get("taskname").trim();
+  let ttime = formdata.get("timepicker").trim();
+
+  let isExciting = false;
   if (tname === "") {
     alert("Please Enter a Valid Name!");
     this.reset();
     return;
   }
-  if (tasks.includes(tname)) {
-    alert("Task already exists!");
+
+  tasks.find((task) => {
+    if (task.name === tname) {
+      alert("Task already exists!");
+      isExciting = true;
+    }
+    return;
+  });
+
+  if (isExciting) {
     return;
   }
-  tasks.push(tname);
-  createTaskEl(tname);
+
+  tasks.push({ name: tname, startTime: ttime });
+  createTaskEl(tname, ttime);
   if (!tasks.includes(selectedTask)) {
     selectedTask = tname;
     taskSelect.value = tname;
@@ -868,11 +929,14 @@ function roundEntryGen(entry) {
   let entryDelete = document.createElement("button");
   entryDelete.className = "entry-delete";
   entryDelete.innerText = "Delete";
+
   entryDelete.addEventListener("click", () => {
     let p = confirm(
       "Are you sure you want to delete this record? This cannot be undone."
     );
+
     if (!p) return;
+
     deleteRecord(entry.d);
     roundEntry.remove();
     loadStatistics(false);
@@ -940,11 +1004,15 @@ let roundEntries = document.getElementById("round-entries");
 
 async function loadStatistics(updateEntryCards = true) {
   let timeValue = statTimeSelect.value;
+
   let rec = await getRecords();
+  console.log(rec);
+
   if (!(timeValue === "all")) {
     let tt = Date.now() - parseInt(timeValue) * 24 * 60 * 60 * 1000;
     rec = rec.filter((r) => r.d >= tt && filteredTasks.has(r.n));
   }
+
   let charts = [];
   let maxvalue = 0;
   let minRoundValue = 0;
@@ -953,12 +1021,14 @@ async function loadStatistics(updateEntryCards = true) {
   let hourlyTimes = new Array(4).fill(0);
   let dayTimes = new Array(7).fill(0);
   let monthTimes = new Array(12).fill(0);
+
   for (let task of filteredTasks) {
     let chart = {
       t: 0,
       task: task,
       n: 0,
     };
+    console.log(task, rec);
     rec
       .filter((r) => r.n === task)
       .forEach((r) => {
@@ -980,6 +1050,7 @@ async function loadStatistics(updateEntryCards = true) {
 
     charts.push(chart);
   }
+
   statSummaryTotal.innerText = hmstrFull(totalValue);
   statSummaryRounds.innerText = rec.length;
   statSummaryAverage.innerText = hmstrFull(
