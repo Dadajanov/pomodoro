@@ -249,12 +249,20 @@ function notify(title, message) {
 function setup() {
   if ("Notification" in window) {
     if (
-      Notification.permission !== "denied" &&
+      Notification.permission === "denied" &&
       Notification.permission !== "granted"
     ) {
       Notification.requestPermission();
     }
   }
+
+  console.log({
+    Notification: "Notification" in window,
+    NotificationPermission: Notification.permission,
+    checking:
+      Notification.permission === "denied" &&
+      Notification.permission !== "granted",
+  });
 
   setTime();
   roundnoDiv.innerText = roundInfo.focusNum + "/" + config.longGap;
