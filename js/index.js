@@ -62,7 +62,6 @@ let roundInfo = {
 
 function setTime(secs) {
   let seconds = config[roundInfo.current] - roundInfo.t;
-  console.log({ seconds });
 
   if (seconds < 0) {
     nextRound();
@@ -830,13 +829,6 @@ document.getElementById("newtask").addEventListener("submit", function (ev) {
   var newDate = new Date(
     d.toString().split(":")[0].slice(0, -2) + ty
   ).getTime();
-
-  console.log(
-    ttime,
-    newDate,
-    new Date().getTime(),
-    newDate - new Date().getTime()
-  );
 
   let isExciting = false;
   if (tname === "") {
