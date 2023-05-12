@@ -60,18 +60,22 @@ let roundInfo = {
 
 //#region Time
 
-function setTime() {
+function setTime(secs) {
   let seconds = config[roundInfo.current] - roundInfo.t;
+  console.log({ seconds });
+
   if (seconds < 0) {
     nextRound();
     return;
   }
+
   let timestr =
     Math.floor(seconds / 60)
       .toString()
       .padStart(2, "0") +
     ":" +
     (seconds % 60).toString().padStart(2, "0");
+
   timediv.innerText = timestr;
   document.title = `${timestr} ${fullname[roundInfo.current]} - pomodoro`;
   progress.style.strokeDashoffset =
@@ -81,6 +85,7 @@ function setTime() {
 
 timerWorker.addEventListener("message", (e) => {
   roundInfo.t = e.data.t;
+
   setTime();
   if (!e.data.running) {
     timer.style.setProperty("--progress", "0");
@@ -818,6 +823,20 @@ document.getElementById("newtask").addEventListener("submit", function (ev) {
   let formdata = new FormData(this);
   let tname = formdata.get("taskname").trim();
   let ttime = formdata.get("timepicker").trim();
+  console.dir(document.getElementById("time-picker"));
+
+  var d = new Date();
+  var ty = `${ttime}:00`;
+  var newDate = new Date(
+    d.toString().split(":")[0].slice(0, -2) + ty
+  ).getTime();
+
+  console.log(
+    ttime,
+    newDate,
+    new Date().getTime(),
+    newDate - new Date().getTime()
+  );
 
   let isExciting = false;
   if (tname === "") {
@@ -840,10 +859,25 @@ document.getElementById("newtask").addEventListener("submit", function (ev) {
 
   tasks.push({ name: tname, startTime: ttime });
   createTaskEl(tname, ttime);
-  if (!tasks.includes(selectedTask)) {
-    selectedTask = tname;
+  tasks.find((task) => {
+    if (task.name === selectedTask) {
+      selectedTask = tname;
+      taskSelect.value = tname;
+      return;
+    }
+  });
+
+  setTimeout(() => {
     taskSelect.value = tname;
-  }
+    console.log({ tname });
+
+    if (roundInfo.running) pauseplay();
+    roundInfo.t = 0;
+    setTime();
+
+    notify("Upcoming task", `your '${tname}' start at ${ttime}`);
+  }, newDate - new Date().getTime());
+
   saveTasks();
   noTaskManager();
   this.reset();
